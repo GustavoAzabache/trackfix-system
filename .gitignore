@@ -1,0 +1,114 @@
+# .gitignore raíz — prompt-security-system
+# Complementa los .gitignore por servicio (Spring / Vite).
+# Cubre lo que esos no cubren: env, uploads, build global, IDE, OS, datos locales.
+
+# --- Secrets y env ---
+# Los .gitignore de Spring no ignoran esto. Incluye backend-ms-springboot/.env
+# (con GOOGLE_API_KEY) y frontend-react-typescript/.env
+.env
+.env.*
+**/.env
+**/.env.*
+*.key
+*.p12
+*.jks
+*.keystore
+**/private*.pem
+**/*private-key*
+secrets/
+
+# --- Uploads / storage runtime ---
+# document-service guarda en ./storage/documents (ver storage.location en
+# config-server/src/main/resources/config/document-service.yaml).
+# Se crea por código en FileStorageService (Files.createDirectories),
+# por eso se ignora la carpeta completa, sin .gitkeep.
+backend-ms-springboot/microservices/document-service/storage/
+**/storage/
+**/uploads/
+**/uploaded-documents/
+*.pdf.orig
+
+# --- Build outputs (global monorepo) ---
+**/target/
+**/build/
+**/out/
+**/node_modules/
+**/dist/
+**/dist-ssr/
+**/coverage/
+**/.vite/
+*.tsbuildinfo
+*.class
+*.jar
+*.war
+*.ear
+
+# --- Frontend gaps (su .gitignore no cubre esto) ---
+playwright-report/
+test-results/
+coverage/
+lib/
+.tmp/
+.temp/
+
+# --- IDE / editores / agentes ---
+# Decisión usuario: ignorar .vscode y .opencode a todo nivel
+.vscode/
+**/.vscode/
+.idea/
+**/.idea/
+*.iml
+*.iws
+*.ipr
+.opencode/
+**/.opencode/
+*.swp
+*.swo
+*~
+
+# --- OS ---
+.DS_Store
+**/.DS_Store
+Thumbs.db
+**/Thumbs.db
+desktop.ini
+
+# --- Logs y temporales ---
+*.log
+**/*.log
+logs/
+**/logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+hs_err_pid*
+*.tmp
+*.temp
+*.bak
+*.orig
+.cache/
+**/.cache/
+
+# --- Docker / DB datos locales ---
+# compose usa volúmenes nombrados, esto es por si se usan bind-mounts locales
+data/
+pgdata/
+mongo-data/
+postgres-data/
+*.sqlite
+*.sqlite3
+*.db
+
+# --- RAG / modelos / vectores locales ---
+**/vector-store/
+**/chroma/
+**/.faiss/
+*.onnx
+*.bin
+*.pt
+*.pth
+*.safetensors
+
+# --- Otros ---
+HELP.md

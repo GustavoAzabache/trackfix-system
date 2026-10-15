@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: backend-springboot
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/trackfix_system
+    username: postgres
+    password: postgres
+
+  jpa:
+      hibernate:
+          ddl-auto: create-drop
+      show-sql: true
