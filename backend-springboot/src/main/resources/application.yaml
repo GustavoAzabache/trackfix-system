@@ -8,6 +8,6 @@ spring:
     password: postgres
 
   jpa:
-      hibernate:
-          ddl-auto: create-drop
-      show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true

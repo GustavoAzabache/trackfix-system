@@ -1,7 +1,6 @@
 package com.me.backend_springboot.tenant.entity;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import com.me.backend_springboot.tenant.exception.InvalidPhoneException;
 import com.me.backend_springboot.tenant.exception.InvalidRucException;
@@ -10,6 +9,8 @@ import com.me.backend_springboot.tenant.exception.InvalidTenantDataException;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -26,7 +27,8 @@ import lombok.NoArgsConstructor;
 public class TenantEntity {
 
     @Id
-    private UUID id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
 
     @Column(name = "tenant_code", nullable = false, unique = true)
     private String tenantCode;
@@ -58,7 +60,7 @@ public class TenantEntity {
         LocalDateTime now = LocalDateTime.now();
 
         return new TenantEntity(
-            UUID.randomUUID(),
+            null,
             tenatCode,
             name,
             phone,

@@ -1,0 +1,34 @@
+name: Java CI/CD con Spring Boot
+
+# 1. ¿Cuándo se ejecuta? Al hacer push a tu rama o abrir un Pull Request
+on:
+  push:
+    branches: [ "main", "feature/*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    # 2. Levanta un contenedor limpio con Ubuntu desde cero
+    runs-on: ubuntu-latest
+
+    steps:
+    # Paso 3: Clona tu código dentro del contenedor de GitHub
+    - name: Clonar el repositorio
+      uses: actions/checkout@v4
+
+    # Paso 4: Instala Java 25 (según la versión que use tu pom.xml)
+    - name: Configurar JDK
+      uses: actions/actions-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven # Guarda en caché tus dependencias para que el próximo push sea más rápido
+
+    # Paso 5: Da permisos de ejecución al wrapper de Maven
+    - name: Dar permisos a Maven Wrapper
+      run: chmod +x mvnw
+
+    # Paso 6: Compila el código y ejecuta TODOS tus tests
+    - name: Ejecutar Tests Unitarios con Maven
+      run: ./mvnw clean test
