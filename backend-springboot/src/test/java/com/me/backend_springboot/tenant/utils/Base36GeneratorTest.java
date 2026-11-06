@@ -1,6 +1,7 @@
 package com.me.backend_springboot.tenant.utils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -10,30 +11,25 @@ public class Base36GeneratorTest {
 
     @Test
     void shouldReturnAFourCharacterCode() {
-        Long id = 30L;
-
-        String resultado = Base36Generator.base36Generator(id);
+        String resultado = Base36Generator.generate();
 
         assertNotNull(resultado);
         assertEquals(4, resultado.length());
     }
 
     @Test
-    void shouldBeDeterministic() {
-        Long id = 567L;
+    void shouldGenerateADifferentCodeOnEachCall() {
+        String primerResultado = Base36Generator.generate();
+        String segundoResultado = Base36Generator.generate();
 
-        String primerResultado = Base36Generator.base36Generator(id);
-        String segundoResultado = Base36Generator.base36Generator(id);
-
-        assertEquals(primerResultado, segundoResultado);
+        assertNotEquals(primerResultado, segundoResultado);
     }
 
     @Test
     void shouldContainOnlyBase36Characters() {
-        Long id = 45L;
         String regex = "^[0-9A-Z]{4}$";
 
-        String resultado = Base36Generator.base36Generator(id);
+        String resultado = Base36Generator.generate();
 
         assertTrue(resultado.matches(regex));
     }

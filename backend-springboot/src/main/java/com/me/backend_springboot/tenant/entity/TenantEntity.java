@@ -1,17 +1,25 @@
 package com.me.backend_springboot.tenant.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import com.me.backend_springboot.auth.entity.AuthEntity;
+import com.me.backend_springboot.employee.entity.EmployeeEntity;
 import com.me.backend_springboot.tenant.exception.InvalidPhoneException;
 import com.me.backend_springboot.tenant.exception.InvalidRucException;
 import com.me.backend_springboot.tenant.exception.InvalidTenantCodeException;
 import com.me.backend_springboot.tenant.exception.InvalidTenantDataException;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -36,11 +44,12 @@ public class TenantEntity {
     @Column(nullable = false, unique = true)
     private String name;
 
-    @Column(nullable = false, unique = true)
+    // Opcional: si no viene, la columna admite NULL (los NULL no chocan con el unique)
+    @Column(nullable = true, unique = true)
     private String phone;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+    @Column(nullable = true, unique = true)
+    private String email; // correo del negocio, con este no se autentica
 
     @Column(nullable = true, unique = true)
     private String ruc;
@@ -48,25 +57,36 @@ public class TenantEntity {
     @Column(nullable = false)
     private String address;
 
-    @Column(name = "created_at", nullable = false, updatable = true)
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "auth_id", nullable = false)
+    private AuthEntity auth;
+
+    // Si un taller es eliminado, se eliminan también sus empleados
+    @OneToMany(mappedBy = "tenant", cascade = CascadeType.REMOVE)
+    private List<EmployeeEntity> employees;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    public static TenantEntity create(String tenatCode, String name, String phone, String email, String ruc, String addres) {
-        validateData(tenatCode, name, phone, email, ruc, addres);
-        
+    public static TenantEntity create(String tenantCode, String name, String phone, String email, String ruc, String address, AuthEntity auth) {
+        validateTenantCode(tenantCode);
+        validateData(name, phone, email, ruc, address);
+
         LocalDateTime now = LocalDateTime.now();
 
         return new TenantEntity(
             null,
-            tenatCode,
+            tenantCode,
             name,
-            phone,
+            normalizePhone(phone),
             email,
             ruc,
-            addres,
+            address,
+            auth,
+            null,
             now,
             now
         );
@@ -77,16 +97,26 @@ public class TenantEntity {
         this.updatedAt = LocalDateTime.now();
     }
 
-    private static void validateData(String tenantCode, String name, String phone, String email, String ruc, String address) {
-        if (tenantCode == null || tenantCode.isBlank() ||
-            name == null || name.isBlank() ||
+    private static void validateTenantCode(String tenantCode) {
+        if (tenantCode == null || tenantCode.trim().length() != 4) {
+            throw new InvalidTenantCodeException("El código del taller debe tener exactamente 4 caracteres alfanuméricos.");
+        }
+    }
+
+    // Celular sin espacios y en dígitos puros; vacío u omitido → null
+    private static String normalizePhone(String phone) {
+        if (phone == null || phone.isBlank()) {
+            return null;
+        }
+
+        return phone.trim().replaceAll("\\s+", "");
+    }
+
+    private static void validateData(String name, String phone, String email, String ruc, String address) {
+        if (name == null || name.isBlank() ||
             email == null || email.isBlank() ||
             address == null || address.isBlank()) {
-            throw new InvalidTenantDataException("Todos los campos obligatorios (Código, Nombre, RUC, Email, Dirección) deben ser completados.");
-        }
-        
-        if (tenantCode.trim().length() != 4) {
-            throw new InvalidTenantCodeException("El código del taller debe tener exactamente 4 caracteres alfanuméricos.");
+            throw new InvalidTenantDataException("Todos los campos obligatorios (Nombre, Email, Dirección) deben ser completados.");
         }
 
         if (ruc != null && !ruc.isBlank()) {
@@ -97,25 +127,21 @@ public class TenantEntity {
         }
 
         if (phone != null && !phone.isBlank()) {
-            String cleanPhone = phone.trim().replaceAll("\\s+", "");
-            
-            // Celulares en Perú empiezan con 9 y tienen 9 dígitos. 
-            // Teléfonos fijos tienen 7 u 8 dígitos (dependiendo de la provincia, ej: Lima es 01 + 7 dígitos).
-            boolean isMobile = cleanPhone.matches("^9\\d{8}$");
-            boolean isLandline = cleanPhone.matches("^\\d{7,9}$");
-            
-            if (!isMobile && !isLandline) {
-                throw new InvalidPhoneException("El número de teléfono no es válido para el territorio peruano.");
+            String cleanPhone = normalizePhone(phone);
+
+            // Solo celular peruano: 9 dígitos que comienzan con 9, sin +51
+            if (!cleanPhone.matches("^9\\d{8}$")) {
+                throw new InvalidPhoneException("El celular debe tener exactamente 9 dígitos y comenzar con 9, sin código de país.");
             }
         }
 
         if (!email.trim().matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$")) {
             throw new InvalidTenantDataException("El formato del correo electrónico es incorrecto.");
         }
-    
+
         if (address.trim().length() < 10) {
             throw new InvalidTenantDataException("La dirección proporcionada es demasiado corta. Debe incluir calle, número, distrito y provincia.");
         }
     }
-    
+
 }
