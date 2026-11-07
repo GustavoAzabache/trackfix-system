@@ -50,6 +50,11 @@ jobs:
       run: chmod +x mvnw
 
     # Paso 6: Compila el código y ejecuta TODOS tus tests
+    # JWT_SECRET: valor de prueba descartable SOLO para los tests (el .env real
+    # está gitignored y no existe en el runner; sin esta variable contextLoads
+    # falla al resolver el placeholder). NO es el secret real.
     - name: Ejecutar Tests Unitarios con Maven
       working-directory: backend-springboot
+      env:
+        JWT_SECRET: test-only-secret-for-ci-not-the-real-one-123456
       run: ./mvnw clean test
