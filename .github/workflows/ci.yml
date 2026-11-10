@@ -1,0 +1,60 @@
+name: Java CI/CD con Spring Boot
+
+# 1. ¿Cuándo se ejecuta? Al hacer push a tu rama o abrir un Pull Request
+on:
+  push:
+    branches: [ "main", "feature/*" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    # 2. Levanta un contenedor limpio con Ubuntu desde cero
+    runs-on: ubuntu-latest
+
+    # 2.1. Base de datos que necesitan los tests (contextLoads levanta el
+    #      contexto con ddl-auto: create-drop y debe conectarse a PostgreSQL).
+    #      Las credenciales coinciden con application.yaml.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trackfix_system
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    # Paso 3: Clona tu código dentro del contenedor de GitHub
+    - name: Clonar el repositorio
+      uses: actions/checkout@v4
+
+    # Paso 4: Instala Java 25 (según la versión que use tu pom.xml)
+    - name: Configurar JDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '25'
+        distribution: 'temurin'
+        cache: maven # Guarda en caché tus dependencias para que el próximo push sea más rápido
+        cache-dependency-path: backend-springboot/pom.xml
+
+    # Paso 5: Da permisos de ejecución al wrapper de Maven (vive en backend-springboot/)
+    - name: Dar permisos a Maven Wrapper
+      working-directory: backend-springboot
+      run: chmod +x mvnw
+
+    # Paso 6: Compila el código y ejecuta TODOS tus tests
+    # JWT_SECRET: valor de prueba descartable SOLO para los tests (el .env real
+    # está gitignored y no existe en el runner; sin esta variable contextLoads
+    # falla al resolver el placeholder). NO es el secret real.
+    - name: Ejecutar Tests Unitarios con Maven
+      working-directory: backend-springboot
+      env:
+        JWT_SECRET: test-only-secret-for-ci-not-the-real-one-123456
+      run: ./mvnw clean test
