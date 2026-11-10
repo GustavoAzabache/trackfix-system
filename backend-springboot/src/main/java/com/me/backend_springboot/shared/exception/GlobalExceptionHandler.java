@@ -18,6 +18,7 @@ import com.me.backend_springboot.auth.exception.EmailAlreadyRegisteredException;
 import com.me.backend_springboot.auth.exception.InvalidAuthDataException;
 import com.me.backend_springboot.auth.exception.InvalidCredentialsException;
 import com.me.backend_springboot.auth.exception.SessionNotActiveException;
+import com.me.backend_springboot.customer.exception.CustomerDataException;
 import com.me.backend_springboot.employee.exception.InvalidEmployeeDataException;
 import com.me.backend_springboot.shared.security.exception.InvalidJwtException;
 import com.me.backend_springboot.tenant.exception.InvalidTenantDataException;
@@ -48,7 +49,11 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
-    @ExceptionHandler({ InvalidAuthDataException.class, InvalidEmployeeDataException.class })
+    @ExceptionHandler({
+        InvalidAuthDataException.class,
+        InvalidEmployeeDataException.class,
+        CustomerDataException.class
+    })
     public ResponseEntity<ErrorResponse> handleInvalidData(Exception ex) {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
